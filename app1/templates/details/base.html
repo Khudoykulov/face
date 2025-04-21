@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Face Chack{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.7/flowbite.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white">
+    {% include 'details/nav.html' %}
+    
+    <div class="container">
+        {% include 'details/messages.html' %}
+        {% block content %}
+        {% endblock %}
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.7/flowbite.min.js"></script>
+</body>
+</html>
+<div id="spinner" class="fixed inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 z-50">
+    <div role="status">
+        <svg class="inline w-12 h-12 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08197 50.5908C9.08197 73.1895 27.4013 91.5088 50 91.5088C72.5987 91.5088 90.918 73.1895 90.918 50.5908C90.918 27.9921 72.5987 9.67282 50 9.67282C27.4013 9.67282 9.08197 27.9921 9.08197 50.5908Z" fill="currentColor"/>
+            <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5533C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8435 15.1192 80.6514 10.7236 74.816 7.635C69.9807 4.54639 64.655 2.83777 59.053 2.0134C55.9444 1.56956 52.7821 1.56956 49.6735 2.0134C44.0715 2.83777 38.7458 4.54639 33.9105 7.635C28.0751 10.7236 22.883 15.1192 18.9098 20.348C15.8555 24.3692 13.4332 28.8227 11.7185 33.5533C10.864 35.9116 12.3334 38.4038 14.7588 39.0409C17.1842 39.678 19.673 38.1958 20.5275 35.8375C21.9046 32.0803 24.0733 28.635 26.8787 25.7004C30.6736 21.491 35.2577 18.3451 40.3421 16.5336C44.3772 15.0636 48.693 14.3636 53.0008 14.3636C57.3086 14.3636 61.6244 15.0636 65.6595 16.5336C70.744 18.3451 75.3281 21.491 79.123 25.7004C81.9284 28.635 84.0971 32.0803 85.4742 35.8375C86.3287 38.1958 88.8175 39.678 91.2429 39.0409H93.9676Z" fill="currentFill"/>
+        </svg>
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const spinner = document.getElementById('spinner');
+        spinner.style.display = 'none';
+    });
+</script>

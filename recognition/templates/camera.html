@@ -1,0 +1,146 @@
+{% extends "details/base.html" %}
+
+{% block content %}
+<div class="container text-center">
+    <h1 class="text-3xl font-bold my-6">Video yozib olish</h1>
+
+    <div class="flex flex-container justify-between mx-4 px-4">
+        <div class="video-container w-2/5">
+            <video id="video" autoplay muted playsinline class="border rounded-lg mb-4"></video>
+        </div>
+        <div>
+            <form method="post">
+                {% csrf_token %}
+                <button id="startButton" type="button" class="btn-primary px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-700 text-white font-bold">Start Recording</button>
+            </form>
+            <div id="timer" class="text-center mt-4"></div>
+        </div>
+        <div style="width: 40%;" class="min-w-2/5 p-4 rounded-lg">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table id="data" class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Name</th>
+                            <th scope="col" class="px-6 py-3">Group</th>
+                            <th scope="col" class="px-6 py-3">Face Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <td colspan="3" id="data_count" class="px-6 py-3 text-center font-bold">Bugun tizimda <span id="totalCount">0</span> kishi qayd qilingan.</td>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const video = document.getElementById('video');
+    const startButton = document.getElementById('startButton');
+    const resultDiv = document.getElementById('result');
+    const dataTable = document.getElementById('data').getElementsByTagName('tbody')[0];
+    const timerDiv = document.getElementById('timer');
+    let captureInterval;
+    let countdownInterval;
+    const captureTime = 2000;
+
+    // Request camera stream as soon as the page loads
+    window.addEventListener('load', async () => {
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+        } catch (error) {
+            alert('Error accessing camera: ' + error.message);
+        }
+    });
+
+    startButton.addEventListener('click', async () => {
+        if (startButton.textContent === 'Start Recording') {
+            startButton.textContent = 'Stop Recording';
+            startButton.classList.replace('btn-primary', 'btn-danger');
+
+            captureInterval = setInterval(captureImage, captureTime);
+            startCountdown(captureTime / 1000);
+        } else {
+            clearInterval(captureInterval);
+            clearInterval(countdownInterval);
+            startButton.textContent = 'Start Recording';
+            startButton.classList.replace('btn-danger', 'btn-primary');
+            timerDiv.textContent = '';
+        }
+    });
+
+    function captureImage() {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+
+        const formData = new FormData();
+        formData.append('faces', dataUrl);
+        fetch("{% url 'recognition:get_video' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.data && data.data.length > 0) {
+                data.data.forEach(face => {
+                    if (!isFaceAlreadyAdded(face.name)) {
+                        const totalCountSpan = document.getElementById('totalCount');
+                        const row = dataTable.insertRow(1);
+                        totalCountSpan.textContent = parseInt(totalCountSpan.textContent) + 1;
+
+                        const cell1 = row.insertCell(0);
+                        const cell2 = row.insertCell(1);
+                        const cell3 = row.insertCell(2);
+
+                        cell1.scope = "col";
+                        cell1.className = "px-6 py-3";
+                        cell1.textContent = face.name;
+
+                        cell2.scope = "col";
+                        cell2.className = "px-6 py-3";
+                        cell2.textContent = face.group;
+
+                        cell3.scope = "col";
+                        cell3.className = "px-6 py-3";
+                        const img = document.createElement('img');
+                        img.src = `${face.face_image}`;
+                        img.width = 50; // Set image width
+                        cell3.appendChild(img);
+                    }
+                });
+            }
+        });
+        startCountdown(captureTime / 1000);
+    }
+
+    function isFaceAlreadyAdded(name) {
+        const rows = dataTable.getElementsByTagName('tr');
+        for (let i = 0; i < rows.length; i++) {
+            const cell = rows[i].getElementsByTagName('td')[0];
+            if (cell && cell.textContent === name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function startCountdown(seconds) {
+        clearInterval(countdownInterval);
+        timerDiv.textContent = `Next capture in: ${seconds} seconds`;
+        countdownInterval = setInterval(() => {
+            seconds--;
+            timerDiv.textContent = `Next capture in: ${seconds} seconds`;
+            if (seconds <= 0) {
+                clearInterval(countdownInterval);
+            }
+        }, 1000);
+    }
+</script>
+{% endblock %}

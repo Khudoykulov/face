@@ -1,0 +1,159 @@
+{% extends "details/base.html" %}
+
+{% block content %}
+<div class="container mx-auto mt-10">
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-900 rounded-lg overflow-hidden md:max-w-md">
+        <div class="md:flex">
+            <div class="w-full p-3 px-6 py-10">
+                <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-white">Add Person Data</h2>
+                <form id="addDataForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mt-4">
+                        <label class="block text-gray-700 dark:text-gray-300">Name</label>
+                        <input type="text" name="name" class="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-700 dark:text-gray-300" required>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-gray-700 dark:text-gray-300">Group</label>
+                        <div class="relative">
+                            <select id="hiddenSelect" name="group" class="hidden">
+                                {% for group in groups %}
+                                    <option value="{{ group.id }}">{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="text" id="searchInput" placeholder="Select or create a group..." class="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-700 dark:text-gray-300">
+                            <div class="absolute w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden" id="dropdown"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-gray-700 dark:text-gray-300">Photo</label>
+                        <div>
+                            <input type="radio" id="uploadOption" name="photoOption" value="upload" checked>
+                            <label for="uploadOption" class="text-gray-700 dark:text-gray-300">Upload</label>
+                            <input type="radio" id="captureOption" name="photoOption" value="capture">
+                            <label for="captureOption" class="text-gray-700 dark:text-gray-300">Capture</label>
+                        </div>
+                        <input type="file" id="photoUpload" name="photo" class="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-700 dark:text-gray-300">
+                        <div id="photoCapture" class="hidden mt-2">
+                            <video id="video" width="320" height="240" autoplay></video>
+                            <canvas id="canvas" width="320" height="240" class="hidden"></canvas>
+                            <button type="button" id="captureButton" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md">Capture</button>
+                            <button type="button" id="resetButton" class="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hidden">Reset</button>
+                            <input type="hidden" id="capturedPhoto" name="capturedPhoto">
+                        </div>
+                    </div>
+                    <div class="flex justify-center mt-6">
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Serch select -->
+<script>
+    const hiddenSelect = document.getElementById('hiddenSelect');
+    const searchInput = document.getElementById('searchInput');
+    const dropdown = document.getElementById('dropdown');
+    
+    // Dropdownni yangilash
+    function updateDropdown(filter = '') {
+        dropdown.innerHTML = '';
+        const filterText = filter.toLowerCase();
+        
+        // Mavjud variantlarni filtrlash
+        Array.from(hiddenSelect.options).forEach(option => {
+            if(option.text.toLowerCase().includes(filterText)) {
+                const div = document.createElement('div');
+                div.className = 'px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600';
+                div.textContent = option.text;
+                div.onclick = () => selectOption(option);
+                dropdown.appendChild(div);
+            }
+        });
+    
+        dropdown.classList.remove('hidden');
+        dropdown.style.maxHeight = '200px'; // Maksimal balandlikni o'rnatish
+        dropdown.style.overflowY = 'auto'; // Vertikal scrollni yoqish
+    }
+    // Variantni tanlash
+    function selectOption(option) {
+        searchInput.value = option.text;
+        Array.from(hiddenSelect.options).forEach(opt => opt.selected = false);
+        option.selected = true;
+        dropdown.classList.add('hidden');
+    }
+    
+    // Input uchun hodisalar
+    searchInput.addEventListener('input', function(e) {
+        updateDropdown(this.value);
+    });
+    
+    searchInput.addEventListener('focus', function() {
+        updateDropdown(this.value);
+    });
+    
+    // searchInput.addEventListener('blur', function() {
+    //     setTimeout(() => {
+    //         const inputValue = this.value.trim();
+    //         if(!inputValue) return;
+    
+    //         // Agar variant topilmasa yangi yaratish
+    //         if(!Array.from(hiddenSelect.options).some(opt => opt.text === inputValue)) {
+    //             const newOption = new Option(inputValue);
+    //             hiddenSelect.add(newOption);
+    //             newOption.selected = true;
+    //         }
+    //     }, 200);
+    // });
+    
+    // Tashqariga bosganda dropdownni yopish
+    document.addEventListener('click', function(e) {
+        if(!e.target.closest('.relative')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('captureOption').addEventListener('change', function() {
+        document.getElementById('photoUpload').classList.add('hidden');
+        document.getElementById('photoCapture').classList.remove('hidden');
+    });
+
+    document.getElementById('uploadOption').addEventListener('change', function() {
+        document.getElementById('photoUpload').classList.remove('hidden');
+        document.getElementById('photoCapture').classList.add('hidden');
+    });
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('captureButton');
+    const resetButton = document.getElementById('resetButton');
+    const capturedPhoto = document.getElementById('capturedPhoto');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        });
+
+    captureButton.addEventListener('click', () => {
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/png');
+        capturedPhoto.value = dataURL;
+        video.classList.add('hidden');
+        canvas.classList.remove('hidden');
+        captureButton.classList.add('hidden');
+        resetButton.classList.remove('hidden');
+    });
+
+    resetButton.addEventListener('click', () => {
+        capturedPhoto.value = '';
+        video.classList.remove('hidden');
+        canvas.classList.add('hidden');
+        captureButton.classList.remove('hidden');
+        resetButton.classList.add('hidden');
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.4.7/flowbite.min.js"></script>
+{% endblock %}

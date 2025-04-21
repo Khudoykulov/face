@@ -1,0 +1,150 @@
+{% load i18n %}
+{% load static %}
+<nav class="bg-white border-gray-200 dark:bg-gray-900">
+  <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+    <a href="{% url 'app1:home' %}" class="flex items-left space-x-3 rtl:space-x-reverse">
+      <img src="{% static 'img/logo_light.png' %}" class="h-12" alt="Yo'qlama Logo" />
+      <span style="margin-left: -20px; margin-top: 16px;" class="self-center text-3xl font-semibold whitespace-nowrap dark:text-white">o'qlama</span>
+    </a>
+    <div class="flex items-center mr-8 md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+      <div class="relative">
+      <button id="dropdownAvatarNameButton" data-dropdown-toggle="dropdownAvatarName" class="flex items-center text-sm pe-1 font-medium text-gray-900 hover:text-blue-600 dark:hover:text-blue-500 md:me-0 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-white" type="button">
+        <span class="sr-only">Open user menu</span>
+        {% if user.is_authenticated %}
+          {% if user.face_date %}
+            <img class="w-8 h-8 me-2 rounded-full mr-2" src="{{ request.user.face_date.get_face_image_base64  }}" alt="user photo">
+          {% else %}
+            <img class="w-8 h-8 me-2 rounded-full mr-2" src="{% static 'default_user_image.png' %}" alt="default user photo">
+          {% endif %}
+          {{ user.get_full_name }}
+        {% else %}
+          Foydalanuvchi
+        {% endif %}
+        <svg class="w-2.5 h-2.5 ms-3 ml-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+        </svg>
+      </button>
+      <div id="dropdownAvatarName" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 dark:divide-gray-600">
+        <div class="px-4 py-3 text-sm text-gray-900 dark:text-white">
+        {% if user.is_authenticated %}
+          <div>{{ user.get_full_name }}</div>
+          <div class="font-medium truncate">{{ user.email }}</div>
+        {% else %}
+          <div>Tizimga kirilmagan</div>
+        {% endif %}
+        </div>
+        <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownAvatarNameButton">
+        <li>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</a>
+        </li>
+        <li>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a>
+        </li>
+        <li>
+          <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Earnings</a>
+        </li>
+        
+        <li class="">
+            <div id="theme-toggle" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                <span id="theme-text" class="mr-2">Dark</span>
+                <span id="theme-icon" class="icon">🌙</span>
+            </div>
+        </li>
+        <li>
+            <form action="{% url 'set_language' %}" method="post" id="language-form" class="block hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+            {% csrf_token %}
+            <label for="language-select" class="sr-only">Select Language</label>
+            <div class="relative">
+            <select id="language-select" name="language" onchange="this.form.submit()" 
+              class="font-medium text-sm w-full 
+              dark:bg-gray-700  dark:placeholder-gray-400 
+              dark:text-white " style="border: none;">
+              <option value="uz" {% if request.LANGUAGE_CODE == 'uz' %}selected{% endif %}>O'zbek</option>
+              <option value="en" {% if request.LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+              <option value="ru" {% if request.LANGUAGE_CODE == 'ru' %}selected{% endif %}>Русский</option>
+            </select>
+            </div>
+            </form>
+        </li>
+        </ul>
+        <div class="py-2">
+        {% if user.is_authenticated %}
+          <a href="{% url 'app1:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
+          {% trans "Logout" %}
+          </a>
+        {% else %}
+          <a href="{% url 'app1:login' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
+          {% trans "Login" %}
+          </a>
+        {% endif %}
+        </div>
+      </div>
+      </div>
+    </div>
+    <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-user">
+      <ul class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 dark:border-gray-700">
+        <li>
+          <a href="#" class="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500" aria-current="page"> {% trans "Bosh sahifa" %} </a>
+        </li>
+        <li>
+          <a href="{% url 'recognition:add_data' %}" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"> {% trans "Qo'shish" %} </a>
+        </li>
+        <li>
+          <a href="#" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Services</a>
+        </li>
+        <li>
+          <a href="#" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Pricing</a>
+        </li>
+        <li>
+          <a href="#" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Contact</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeIcon = document.getElementById("theme-icon");
+    const themeText = document.getElementById("theme-text");
+
+    // Cookie orqali mavzuni tekshirish
+    const getCookie = (name) => {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : null;
+    };
+
+    // Foydalanuvchi tanlovini o‘rnatish
+    const setTheme = (isDark) => {
+        if (isDark) {
+            document.documentElement.classList.add("dark");
+            themeIcon.textContent = "☀️";  
+            themeText.textContent = "Light";
+            themeToggle.classList.add( "text-white");
+            themeToggle.classList.remove( "text-gray-900");
+            document.cookie = "theme=dark; path=/";
+        } else {
+            document.documentElement.classList.remove("dark");
+            themeIcon.textContent = "🌙";  
+            themeText.textContent = "Dark";
+            themeToggle.classList.add( "text-gray-900");
+            themeToggle.classList.remove( "text-white");
+            document.cookie = "theme=light; path=/";
+        }
+    };
+
+    // Brauzer holatini tekshirish va o‘rnatish
+    const savedTheme = getCookie("theme");
+    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        setTheme(true);
+    } else {
+        setTheme(false);
+    }
+
+    // Tugmani bosganda rejimni o‘zgartirish
+    themeToggle.addEventListener("click", function () {
+        setTheme(!document.documentElement.classList.contains("dark"));
+    });
+});
+</script>
